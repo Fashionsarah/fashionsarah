@@ -5,10 +5,13 @@ export default function AuditTool() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
-  const handleAudit = async () => {
+const handleAudit = async () => {
+  try {
+    const response = await fetch(`/api/audit?url=${encodeURIComponent(url)}`);
+    const text = await response.text();
+
     try {
-      const response = await fetch(`/api/audit?url=${encodeURIComponent(url)}`);
-      const data = await response.json();
+      const data = JSON.parse(text);
 
       if (!response.ok) {
         setError(data.message || 'Audit failed');
@@ -17,11 +20,16 @@ export default function AuditTool() {
         setResult(data);
         setError(null);
       }
-    } catch (err) {
-      setError('Unexpected error occurred.');
-      setResult(null);
+    } catch (parseError) {
+      console.error('Failed to parse JSON:', text);
+      setError('Server returned invalid JSON');
     }
-  };
+  } catch (err) {
+    console.error('Unexpected fetch error:', err);
+    setError('Unexpected error occurred.');
+    setResult(null);
+  }
+};
 
   const renderAuditResults = () => {
     if (!result?.lighthouseResult) return null;
