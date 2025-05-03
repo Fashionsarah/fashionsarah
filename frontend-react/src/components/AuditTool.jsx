@@ -16,12 +16,11 @@ export default function AuditTool() {
   }
 };
 
-  return (
-    <div>
-      <h2>SEO Site Audit</h2>
-      <input value={url} onChange={e => setUrl(e.target.value)} />
-      <button onClick={handleAudit}>Audit</button>
-      {result && <pre>{JSON.stringify(result, null, 2)}</pre>}
-    </div>
-  );
-}
+{results && (
+  <pre>
+    {results.error 
+      ? `❌ Error: ${results.message}` 
+      : JSON.stringify(results, null, 2)}
+  </pre>
+)}
+
