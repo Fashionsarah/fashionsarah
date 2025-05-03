@@ -4,78 +4,90 @@ export default function AuditTool() {
   const [url, setUrl] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-const handleAudit = async () => {
-  try {
-    const response = await fetch(`/api/audit?url=${encodeURIComponent(url)}`);
-    const text = await response.text();
+  const handleAudit = async () => {
+    setLoading(true);
+    setResult(null);
+    setError(null);
+
+    let fullUrl = url.trim();
+    if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+      fullUrl = 'https://' + fullUrl;
+    }
 
     try {
-      const data = JSON.parse(text);
+      const response = await fetch(`/api/audit?url=${encodeURIComponent(fullUrl)}`);
+      const text = await response.text();
 
-      if (!response.ok) {
-        setError(data.message || 'Audit failed');
-        setResult(null);
-      } else {
-        setResult(data);
-        setError(null);
+      try {
+        const data = JSON.parse(text);
+
+        if (!response.ok || data.error) {
+          setError(data.message || 'Audit failed.');
+        } else {
+          setResult(data);
+        }
+      } catch (jsonError) {
+        console.error('Not JSON:', text);
+        setError('Server returned invalid response');
       }
-    } catch (parseError) {
-      console.error('Failed to parse JSON:', text);
-      setError('Server returned invalid JSON');
+    } catch (err) {
+      console.error('Fetch failed:', err);
+      setError('Network or server error');
     }
-  } catch (err) {
-    console.error('Unexpected fetch error:', err);
-    setError('Unexpected error occurred.');
-    setResult(null);
-  }
-};
+
+    setLoading(false);
+  };
 
   const renderAuditResults = () => {
     if (!result?.lighthouseResult) return null;
 
     const audits = result.lighthouseResult.audits;
 
-    const metricsToShow = [
-      'first-contentful-paint',
-      'speed-index',
-      'largest-contentful-paint',
-      'interactive',
-      'total-blocking-time',
-      'cumulative-layout-shift'
-    ];
+    const get = (key) => audits[key]?.displayValue || 'N/A';
+    const score = (s) => s ? s * 100 : 0;
 
     return (
-      <div>
+      <div style={{ background: '#f9f9f9', padding: '1rem', marginTop: '1rem', borderRadius: '8px' }}>
         <h3>Audit Results for: {result.id}</h3>
         <ul>
-          {metricsToShow.map((key) => {
-            const audit = audits[key];
-            return (
-              <li key={key}>
-                <strong>{audit.title}:</strong> {audit.displayValue || audit.numericValue} ({audit.score * 100}/100)
-              </li>
-            );
-          })}
+          <li><strong>Performance Score:</strong> {score(result.lighthouseResult.categories.performance.score)}/100</li>
+          <li><strong>First Contentful Paint:</strong> {get('first-contentful-paint')}</li>
+          <li><strong>Largest Contentful Paint:</strong> {get('largest-contentful-paint')}</li>
+          <li><strong>Total Blocking Time:</strong> {get('total-blocking-time')}</li>
+          <li><strong>Time to Interactive:</strong> {get('interactive')}</li>
+          <li><strong>Cumulative Layout Shift:</strong> {get('cumulative-layout-shift')}</li>
         </ul>
       </div>
     );
   };
 
   return (
-    <div>
-      <h2>SEO Site Audit</h2>
+    <div style={{ padding: '1rem', maxWidth: '600px' }}>
+      <h2>🔍 SEO Site Audit</h2>
       <input
         type="text"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
         placeholder="https://example.com"
-        style={{ width: '300px' }}
+        style={{ width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }}
       />
-      <button onClick={handleAudit}>Audit</button>
+      <button onClick={handleAudit} disabled={loading}>
+        {loading ? 'Auditing...' : 'Run Audit'}
+      </button>
 
-      {error && <p style={{ color: 'red' }}>❌ Error: {error}</p>}
+      {error && (
+        <p style={{ color: 'red', marginTop: '1rem' }}>❌ Error: {error}</p>
+      )}
+
       {renderAuditResults()}
+
+      {result && !result?.lighthouseResult && !error && (
+        <pre style={{ background: '#eee', padding: '1rem', marginTop: '1rem' }}>
+          {JSON.stringify(result, null, 2)}
+        </pre>
+      )}
     </div>
   );
 }
