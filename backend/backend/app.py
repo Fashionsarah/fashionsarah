@@ -23,16 +23,20 @@ def site_audit():
         return jsonify({ "error": True, "message": "Invalid URL" }), 400
 
     psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={GOOGLE_PSI_KEY}"
-    response = requests.get(psi_url)
-
-    content_type = response.headers.get("Content-Type", "")
-    if "application/json" not in content_type:
-        print("❌ HTML received from PSI API:", response.text[:300])
-        return jsonify({ "error": True, "message": "Google PSI returned non-JSON. Check API key or quota." }), 500
-
+    
     try:
-        return jsonify(response.json())
+        response = requests.get(psi_url)
+        content_type = response.headers.get('Content-Type', '')
+        
+        if 'application/json' not in content_type:
+            print("❌ PSI error HTML received:", response.text[:300])
+            return jsonify({ "error": True, "message": "PSI API returned HTML. Invalid key or quota exceeded." }), 502
+
+        data = response.json()
+        return jsonify(data)
+    
     except Exception as e:
+        print("❌ Exception:", e)
         return jsonify({ "error": True, "message": str(e) }), 500
 
 if __name__ == '__main__':
