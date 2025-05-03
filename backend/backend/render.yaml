@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: fashionsarah
+    env: python
+    buildCommand: ""
+    startCommand: "python app.py"
+    envVars:
+      - key: SERP_API_KEY
+        sync: false
+      - key: GOOGLE_PSI_KEY
+        sync: false
