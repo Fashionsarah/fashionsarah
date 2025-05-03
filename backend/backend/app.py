@@ -22,6 +22,10 @@ def site_audit():
     psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={GOOGLE_PSI_KEY}"
     response = requests.get(psi_url)
     return jsonify(response.json())
+    
+@app.route('/')
+def home():
+    return 'API is running!'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
