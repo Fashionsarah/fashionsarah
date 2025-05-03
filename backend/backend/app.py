@@ -19,7 +19,8 @@ def keyword_search():
 @app.route('/api/audit')
 def site_audit():
     url = request.args.get('url')
-    psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={GOOGLE_PSI_KEY}"
+    encoded_url = quote(url, safe='')
+    psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={encoded_url}&key={GOOGLE_PSI_KEY}"
     response = requests.get(psi_url)
     return jsonify(response.json())
     
