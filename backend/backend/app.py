@@ -20,11 +20,17 @@ def keyword_search():
 def site_audit():
     url = request.args.get('url')
     if not url or not url.startswith("http"):
-        return jsonify({ "error": True, "message": "Invalid URL: Must start with http(s)://" }), 400
+        return jsonify({ "error": True, "message": "Invalid URL" }), 400
 
     psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={GOOGLE_PSI_KEY}"
+    response = requests.get(psi_url)
+
+    content_type = response.headers.get("Content-Type", "")
+    if "application/json" not in content_type:
+        print("❌ HTML received from PSI API:", response.text[:300])
+        return jsonify({ "error": True, "message": "Google PSI returned non-JSON. Check API key or quota." }), 500
+
     try:
-        response = requests.get(psi_url)
         return jsonify(response.json())
     except Exception as e:
         return jsonify({ "error": True, "message": str(e) }), 500
