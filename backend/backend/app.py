@@ -20,23 +20,27 @@ def keyword_search():
 def site_audit():
     url = request.args.get('url')
     if not url or not url.startswith("http"):
-        return jsonify({ "error": True, "message": "Invalid URL" }), 400
+        return jsonify({ "error": True, "message": "Invalid URL. Include http:// or https://" }), 400
 
     psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={GOOGLE_PSI_KEY}"
-    
+
     try:
         response = requests.get(psi_url)
-        content_type = response.headers.get('Content-Type', '')
-        
-        if 'application/json' not in content_type:
-            print("❌ PSI error HTML received:", response.text[:300])
-            return jsonify({ "error": True, "message": "PSI API returned HTML. Invalid key or quota exceeded." }), 502
+        print("📤 Request to PSI URL:", psi_url)
+        print("📄 PSI response headers:", response.headers)
+        print("📄 PSI response text (first 300 chars):", response.text[:300])
 
-        data = response.json()
-        return jsonify(data)
-    
+        if 'application/json' not in response.headers.get('Content-Type', ''):
+            return jsonify({
+                "error": True,
+                "message": "Google PSI returned HTML instead of JSON. Likely invalid key or quota exceeded.",
+                "status_code": response.status_code
+            }), 502
+
+        return jsonify(response.json())
+
     except Exception as e:
-        print("❌ Exception:", e)
+        print("❌ Exception during audit:", e)
         return jsonify({ "error": True, "message": str(e) }), 500
 
 if __name__ == '__main__':
