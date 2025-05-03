@@ -17,26 +17,21 @@ def keyword_search():
     return jsonify(response.json())
 
 @app.route('/api/audit')
+@app.route('/api/audit')
 def site_audit():
     url = request.args.get('url')
     if not url:
-        return jsonify({"error": "Missing URL parameter"}), 400
+        return jsonify({'error': True, 'message': 'Missing URL parameter'}), 400
 
     psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={GOOGLE_PSI_KEY}"
-    
+
     try:
         response = requests.get(psi_url)
-        print(f"🔍 Auditing URL: {url}")
-        print(f"📥 Google PSI status: {response.status_code}")
-        print(f"📄 Response: {response.text[:500]}")  # Print only first 500 chars
-
-        if response.status_code != 200:
-            return jsonify({"error": f"PSI returned {response.status_code}", "details": response.text}), response.status_code
-
+        response.raise_for_status()
         return jsonify(response.json())
-    except Exception as e:
-        print(f"❌ Error auditing URL: {e}")
-        return jsonify({"error": "Server error", "details": str(e)}), 500
+    except requests.exceptions.RequestException as e:
+        print("Audit error:", e)
+        return jsonify({'error': True, 'message': str(e)}), 500
 
 @app.route('/')
 def home():
