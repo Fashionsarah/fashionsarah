@@ -17,7 +17,6 @@ def keyword_search():
     return jsonify(response.json())
 
 @app.route('/api/audit')
-@app.route('/api/audit')
 def site_audit():
     url = request.args.get('url')
     if not url:
@@ -27,9 +26,12 @@ def site_audit():
 
     try:
         response = requests.get(psi_url)
-        response.raise_for_status()
+        if response.headers.get('Content-Type') != 'application/json':
+            print("Non-JSON response:", response.text[:300])
+            return jsonify({'error': True, 'message': 'Received non-JSON response from API'}), 500
+
         return jsonify(response.json())
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print("Audit error:", e)
         return jsonify({'error': True, 'message': str(e)}), 500
 
