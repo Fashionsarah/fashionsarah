@@ -19,33 +19,32 @@ def keyword_search():
 @app.route('/api/audit')
 def site_audit():
     url = request.args.get('url')
+    
+    # Validation
     if not url or not url.startswith("http"):
-        return jsonify({'error': True, 'message': 'Invalid or missing URL. Please include http:// or https://'}), 400
+        return jsonify({'error': True, 'message': 'Invalid or missing URL. Include http:// or https://'}), 400
 
-    psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={GOOGLE_PSI_KEY}"
+    # Build PSI API URL
+    psi_key = os.getenv("GOOGLE_PSI_KEY")
+    psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={psi_key}"
 
     try:
         response = requests.get(psi_url)
         content_type = response.headers.get('Content-Type', '')
 
+        # Debug info to Render logs
+        print("🔍 PSI request URL:", psi_url)
+        print("📄 Content-Type:", content_type)
+
         if 'application/json' not in content_type:
-            print("Non-JSON response:", response.text[:300])
-            return jsonify({'error': True, 'message': 'API did not return JSON. Check API key and URL.'}), 500
+            print("⚠️ HTML response instead of JSON:", response.text[:300])
+            return jsonify({'error': True, 'message': 'PSI API returned HTML instead of JSON. Check API key or quota.'}), 500
 
         return jsonify(response.json())
+
     except Exception as e:
-        print("Audit error:", e)
+        print("❌ Exception during audit request:", e)
         return jsonify({'error': True, 'message': str(e)}), 500
-
-
-        return jsonify(response.json())
-    except Exception as e:
-        print("Audit error:", e)
-        return jsonify({'error': True, 'message': str(e)}), 500
-
-@app.route('/')
-def home():
-    return 'API is running!'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
