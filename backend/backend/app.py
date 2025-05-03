@@ -19,14 +19,16 @@ def keyword_search():
 @app.route('/api/audit')
 def site_audit():
     url = request.args.get('url')
-    if not url.startswith("http"):
+    if not url or not url.startswith("http"):
         return jsonify({ "error": True, "message": "Invalid URL: Must start with http(s)://" }), 400
 
     psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={GOOGLE_PSI_KEY}"
-    response = requests.get(psi_url)
-    return jsonify(response.json())
+    try:
+        response = requests.get(psi_url)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({ "error": True, "message": str(e) }), 500
 
 if __name__ == '__main__':
-  import os
-port = int(os.environ.get("PORT", 5000))
-app.run(host='0.0.0.0', port=port)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
