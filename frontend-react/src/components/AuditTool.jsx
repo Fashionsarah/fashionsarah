@@ -1,39 +1,73 @@
 import React, { useState } from 'react';
 
 export default function AuditTool() {
-  const [auditQuery, setAuditQuery] = useState('');
-  const [results, setResults] = useState(null);
+  const [url, setUrl] = useState('');
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleAudit = async () => {
     try {
-      const response = await fetch(`https://fashionsarah.onrender.com/api/audit?url=${encodeURIComponent(auditQuery)}`);
+      const response = await fetch(`/api/audit?url=${encodeURIComponent(url)}`);
       const data = await response.json();
 
       if (!response.ok) {
-        setResults({ error: true, message: data.message || "Audit failed" });
+        setError(data.message || 'Audit failed');
+        setResult(null);
       } else {
-        setResults(data);
+        setResult(data);
+        setError(null);
       }
     } catch (err) {
-      setResults({ error: true, message: "Unexpected error: " + err.message });
+      setError('Unexpected error occurred.');
+      setResult(null);
     }
   };
 
+  const renderAuditResults = () => {
+    if (!result?.lighthouseResult) return null;
+
+    const audits = result.lighthouseResult.audits;
+
+    const metricsToShow = [
+      'first-contentful-paint',
+      'speed-index',
+      'largest-contentful-paint',
+      'interactive',
+      'total-blocking-time',
+      'cumulative-layout-shift'
+    ];
+
+    return (
+      <div>
+        <h3>Audit Results for: {result.id}</h3>
+        <ul>
+          {metricsToShow.map((key) => {
+            const audit = audits[key];
+            return (
+              <li key={key}>
+                <strong>{audit.title}:</strong> {audit.displayValue || audit.numericValue} ({audit.score * 100}/100)
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  };
+
   return (
-    <>
+    <div>
       <h2>SEO Site Audit</h2>
       <input
         type="text"
-        value={auditQuery}
-        onChange={(e) => setAuditQuery(e.target.value)}
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
         placeholder="https://example.com"
+        style={{ width: '300px' }}
       />
       <button onClick={handleAudit}>Audit</button>
-      {results && (
-        <pre>
-          {results.error ? `❌ Error: ${results.message}` : JSON.stringify(results, null, 2)}
-        </pre>
-      )}
-    </>
+
+      {error && <p style={{ color: 'red' }}>❌ Error: {error}</p>}
+      {renderAuditResults()}
+    </div>
   );
 }
