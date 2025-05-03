@@ -19,8 +19,12 @@ def keyword_search():
 @app.route('/api/audit')
 def site_audit():
     url = request.args.get('url')
-    encoded_url = quote(url, safe='')
+    encoded_url = quote(url, safe='')  # Safely encode URL
     psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={encoded_url}&key={GOOGLE_PSI_KEY}"
+    
+    # 👇 This logs the full PSI URL to Render's logs
+    print("Sending PSI request to:", psi_url)
+
     response = requests.get(psi_url)
     return jsonify(response.json())
     
