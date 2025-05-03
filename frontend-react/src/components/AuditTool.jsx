@@ -6,9 +6,15 @@ export default function AuditTool() {
   const [result, setResult] = useState(null);
 
   const handleAudit = async () => {
-    const res = await axios.get(`https://fashionsarah.onrender.com/api/audit?url=${url}`);
-    setResult(res.data);
-  };
+  const response = await fetch(`/api/audit?url=${encodeURIComponent(auditQuery)}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    setResults({ error: true, message: data.message || "Audit failed" });
+  } else {
+    setResults(data);
+  }
+};
 
   return (
     <div>
