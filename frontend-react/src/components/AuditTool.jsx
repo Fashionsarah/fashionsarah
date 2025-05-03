@@ -15,7 +15,7 @@ function AuditTool() {
     setResults(null);
 
     try {
-      const response = await fetch(`/api/audit?url=${encodeURIComponent(auditQuery)}`);
+      const response = await fetch(`https://fashionsarah.onrender.com/api/audit?url=${encodeURIComponent(auditQuery)}`);
       const data = await response.json();
 
       if (!response.ok || data.error) {
