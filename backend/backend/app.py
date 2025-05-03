@@ -21,7 +21,7 @@ def site_audit():
     url = request.args.get('url')
     if not url.startswith("http"):
         return jsonify({ "error": True, "message": "Invalid URL: Must start with http(s)://" }), 400
-    
+
     psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={url}&key={GOOGLE_PSI_KEY}"
     response = requests.get(psi_url)
     return jsonify(response.json())
