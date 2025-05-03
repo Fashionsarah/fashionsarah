@@ -15,7 +15,7 @@ function AuditTool() {
     setResults(null);
 
     try {
-      const response = await fetch(`/api/audit?url=${encodeURIComponent(url)}`);
+      const response = await fetch(`/api/audit?url=${encodeURIComponent(auditQuery)}`);
       const data = await response.json();
 
       if (!response.ok || data.error) {
